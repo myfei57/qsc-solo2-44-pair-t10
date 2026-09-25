@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Line overview</title>
+<style>
+body { font-family: system-ui, sans-serif; margin: 0; background: #11161c; color: #dfe6ee; }
+header { padding: 16px 24px; background: #182029; border-bottom: 1px solid #26313d; }
+h1 { font-size: 18px; margin: 0 0 4px; }
+nav a { color: #7fb2e6; margin-right: 16px; text-decoration: none; font-size: 13px; }
+section { padding: 16px 24px; }
+h2 { font-size: 14px; text-transform: uppercase; letter-spacing: .08em; color: #8fa2b5; margin: 0 0 10px; }
+table { border-collapse: collapse; width: 100%; font-size: 13px; }
+th, td { text-align: left; padding: 6px 10px; border-bottom: 1px solid #232e39; }
+.ok { color: #6ad48b; }
+.warn { color: #e6b25e; }
+.bad { color: #e8695f; }
+.pill { display: inline-block; padding: 1px 8px; border-radius: 9px; background: #223040; font-size: 12px; }
+button { background: #26445f; color: #dfe6ee; border: 1px solid #35566f; padding: 6px 12px; border-radius: 4px; cursor: pointer; }
+pre { background: #0d1218; padding: 12px; border-radius: 6px; overflow: auto; font-size: 12px; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Overview</h1>
+  <nav><a href="/">overview</a><a href="/operations">operations</a><a href="/records">records</a></nav>
+</header>
+<section>
+  <h2>Line state</h2>
+  <table id="lines"><tbody></tbody></table>
+</section>
+<section>
+  <h2>Subsystems</h2>
+  <table id="subsystems"><tbody></tbody></table>
+</section>
+<section>
+  <h2>Alarms</h2>
+  <table id="alarms"><tbody></tbody></table>
+</section>
+<section>
+  <h2>Watermark</h2>
+  <pre id="watermark"></pre>
+  <button id="refresh">refresh</button>
+</section>
+<script id="bootstrap" type="application/json"><!--STATE--></script>
+<script>
+function render(state) {
+  const lines = document.querySelector('#lines tbody');
+  lines.innerHTML = '';
+  Object.keys(state.lines).forEach((name) => {
+    const line = state.lines[name];
+    const row = document.createElement('tr');
+    row.innerHTML = `<td>${name}</td><td><span class="pill">${line.phase}</span></td><td>next: ${line.next || 'end'}</td>`;
+    lines.appendChild(row);
+  });
+  const body = document.querySelector('#subsystems tbody');
+  body.innerHTML = '';
+  Object.keys(state.subsystems).forEach((name) => {
+    const row = document.createElement('tr');
+    row.innerHTML = `<td>${name}</td><td><code>${JSON.stringify(state.subsystems[name])}</code></td>`;
+    body.appendChild(row);
+  });
+  const alarms = document.querySelector('#alarms tbody');
+  alarms.innerHTML = '';
+  (state.alarms || []).forEach((alarm) => {
+    const row = document.createElement('tr');
+    row.innerHTML = `<td class="bad">${alarm.name}</td><td>${alarm.origin}</td><td>tick ${alarm.tick}</td>`;
+    alarms.appendChild(row);
+  });
+  document.querySelector('#watermark').textContent = JSON.stringify(state.watermark, null, 2);
+}
+render(JSON.parse(document.getElementById('bootstrap').textContent));
+document.getElementById('refresh').addEventListener('click', function () {
+  fetch('/api/state').then((r) => r.json()).then(render);
+});
+</script>
+</body>
+</html>
