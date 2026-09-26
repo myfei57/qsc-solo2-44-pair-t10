@@ -60,9 +60,9 @@ class StateView:
         return self._repository.state()
 
     def as_of(self, tick: int) -> dict[str, Any]:
-        """Return the state the stream currently produces."""
+        """Return the state as it stood at ``tick``."""
 
-        return self.current()
+        return state_at_tick(self._repository.committed_records(), tick)
 
     def delta(self, tick: int) -> StateDelta:
         """Compare the state at ``tick`` with the state right now."""

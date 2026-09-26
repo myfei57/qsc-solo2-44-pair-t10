@@ -14,6 +14,9 @@ th, td { text-align: left; padding: 6px 10px; border-bottom: 1px solid #232e39; 
 code { color: #9fc7ee; }
 input { background: #0d1218; color: #dfe6ee; border: 1px solid #2b3946; padding: 5px 8px; border-radius: 4px; }
 button { background: #26445f; color: #dfe6ee; border: 1px solid #35566f; padding: 6px 12px; border-radius: 4px; cursor: pointer; }
+tr.voided td { color: #7d8a97; text-decoration: line-through; }
+tr.tombstone td { color: #b08a5a; }
+.badge { font-size: 11px; border: 1px solid #4a5a68; border-radius: 3px; padding: 1px 5px; margin-left: 6px; color: #9fb2c2; }
 </style>
 </head>
 <body>
@@ -38,12 +41,20 @@ button { background: #26445f; color: #dfe6ee; border: 1px solid #35566f; padding
 <script>
 function render(result) {
   document.getElementById('summary').textContent =
-    `${result.total} records by kind ${JSON.stringify(result.by_kind)}`;
+    `${result.total} records, ${result.voided} voided, by kind ${JSON.stringify(result.by_kind)}`;
   const rows = document.getElementById('rows');
   rows.innerHTML = '';
   result.records.forEach((record) => {
     const row = document.createElement('tr');
-    row.innerHTML = `<td>${record.seq}</td><td><code>${record.kind}</code></td>` +
+    let flag = '';
+    if (record.voided) {
+      row.className = 'voided';
+      flag = '<span class="badge">voided</span>';
+    } else if (record.tombstone_of !== null && record.tombstone_of !== undefined) {
+      row.className = 'tombstone';
+      flag = `<span class="badge">tombstone of #${record.tombstone_of}</span>`;
+    }
+    row.innerHTML = `<td>${record.seq}${flag}</td><td><code>${record.kind}</code></td>` +
       `<td>${record.origin}</td><td>${record.generation}</td><td>${record.tick}</td>` +
       `<td><code>${JSON.stringify(record.payload)}</code></td>`;
     rows.appendChild(row);
