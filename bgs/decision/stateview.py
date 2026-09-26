@@ -60,9 +60,19 @@ class StateView:
         return self._repository.state()
 
     def as_of(self, tick: int) -> dict[str, Any]:
-        """Return the state the stream currently produces."""
+        """Return the state as it stood at ``tick``.
 
-        return self.current()
+        Only records committed by ``tick`` are replayed, and a tombstone
+        takes effect at its own tick, so a later rollback does not
+        retroactively rewrite the state that was visible earlier.
+        """
+
+        if tick < 0:
+            raise ValueError("tick must not be negative")
+        committed = tuple(
+            rec for rec in self._repository.committed_records() if rec.tick <= tick
+        )
+        return state_at_tick(committed, tick)
 
     def delta(self, tick: int) -> StateDelta:
         """Compare the state at ``tick`` with the state right now."""

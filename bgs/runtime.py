@@ -277,7 +277,16 @@ class LineControlRuntime:
         """Run the audit query the caller asked for."""
 
         params = params or {}
-        query = RecordQuery(include_tombstones=True, limit=_maybe_int(params.get("limit")))
+        query = RecordQuery(
+            kinds=_split(params.get("kind")),
+            origins=_split(params.get("origin")),
+            seq_from=_maybe_int(params.get("seq_from")),
+            seq_to=_maybe_int(params.get("seq_to")),
+            tick_from=_maybe_int(params.get("tick_from")),
+            tick_to=_maybe_int(params.get("tick_to")),
+            include_tombstones=_truthy(params.get("include_tombstones")),
+            limit=_maybe_int(params.get("limit")),
+        )
         return run_query(self.store.committed_records(), query).describe()
 
     def history(self, tick: int) -> dict[str, Any]:
@@ -458,3 +467,7 @@ def _maybe_int(value: Any) -> int | None:
         return int(value)
     except (TypeError, ValueError) as exc:
         raise ValidationError("query field must be an integer", value=str(value)) from exc
+
+
+def _truthy(value: Any) -> bool:
+    return str(value).strip().lower() in {"1", "true", "yes", "on"}
